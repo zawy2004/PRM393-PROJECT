@@ -35,6 +35,11 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+  # Vuốt thẻ kiểu Tinder cho màn Khám phá.
+  flutter_card_swiper: ^7.0.0
+  # Hiệu ứng pháo giấy khi "match" món ăn.
+  confetti: ^0.7.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
