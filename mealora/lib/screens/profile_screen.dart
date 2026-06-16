@@ -64,11 +64,11 @@ class ProfileScreen extends StatelessWidget {
                         color: Colors.white)),
               ),
               const SizedBox(height: 12),
-              Text('Lương Duy',
+              Text('clone',
                   style:
                       AppTextStyles.titleLarge.copyWith(color: Colors.white, fontSize: 22)),
               const SizedBox(height: 4),
-              Text('duyluong@email.com',
+              Text('clone@email.com',
                   style: AppTextStyles.bodySmall
                       .copyWith(color: Colors.white.withValues(alpha: 0.85))),
             ],
