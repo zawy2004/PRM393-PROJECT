@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import '../data/sample_data.dart';
+import '../database/database_service.dart';
+import '../models/order.dart';
+import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
 import '../utils/formatters.dart';
 import 'order_tracking_screen.dart';
 
-/// Màn hình lịch sử đơn hàng: thanh tab lọc trạng thái + danh sách đơn.
-/// Đây là một tab trong MainShell nên không có nút back.
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
 
@@ -17,9 +18,66 @@ class OrderHistoryScreen extends StatefulWidget {
 class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   static const List<String> _tabs = ['Tất cả', 'Đang giao', 'Hoàn thành', 'Đã hủy'];
 
-  static const List<OrderHistoryItem> _orders = SampleData.orders;
-
   int _selectedTab = 0;
+  List<OrderHistoryItem> _orders = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrders();
+  }
+
+  Future<void> _loadOrders() async {
+    setState(() => _loading = true);
+    final userId = SessionController.instance.userId;
+    final dbOrders = await DatabaseService.instance.getOrderHistory(userId);
+
+    if (dbOrders.isEmpty) {
+      // Dùng dữ liệu mẫu khi chưa có đơn thật trong DB.
+      setState(() {
+        _orders = List.of(SampleData.orders);
+        _loading = false;
+      });
+      return;
+    }
+
+    // Chuyển đổi Order (DB) → OrderHistoryItem (UI).
+    final items = await Future.wait(dbOrders.map(_toHistoryItem));
+    setState(() {
+      _orders = items;
+      _loading = false;
+    });
+  }
+
+  Future<OrderHistoryItem> _toHistoryItem(Order order) async {
+    final orderItems = await DatabaseService.instance.getOrderItems(order.id);
+    final dt = DateTime.fromMillisecondsSinceEpoch(order.createdAt);
+    final dateStr =
+        '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    final itemNames =
+        orderItems.isEmpty ? '—' : orderItems.map((i) => i.mealName).join(', ');
+
+    OrderStatus status;
+    switch (order.status) {
+      case 'completed':
+        status = OrderStatus.completed;
+        break;
+      case 'cancelled':
+        status = OrderStatus.cancelled;
+        break;
+      default:
+        status = OrderStatus.delivering;
+    }
+
+    return OrderHistoryItem(
+      id: order.id,
+      date: dateStr,
+      items: itemNames,
+      total: order.total,
+      status: status,
+    );
+  }
 
   List<OrderHistoryItem> get _visible {
     switch (_selectedTab) {
@@ -48,23 +106,51 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         title: Text('Đơn hàng',
             style:
                 AppTextStyles.appBarTitle.copyWith(color: palette.textPrimary)),
-      ),
-      body: Column(
-        children: [
-          _buildTabs(),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              itemCount: _visible.length,
-              itemBuilder: (context, index) => _buildOrderCard(_visible[index]),
-            ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Làm mới',
+            onPressed: _loadOrders,
           ),
+        ],
+      ),
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : Column(
+              children: [
+                _buildTabs(),
+                Expanded(
+                  child: _visible.isEmpty
+                      ? _buildEmpty()
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                          itemCount: _visible.length,
+                          itemBuilder: (context, i) =>
+                              _buildOrderCard(_visible[i]),
+                        ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildEmpty() {
+    final palette = context.palette;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.receipt_long_outlined,
+              size: 64, color: palette.textHint),
+          const SizedBox(height: 16),
+          Text('Chưa có đơn hàng nào',
+              style: AppTextStyles.subtitle
+                  .copyWith(color: palette.textSecondary)),
         ],
       ),
     );
   }
 
-  /// Thanh tab cuộn ngang lọc theo trạng thái.
   Widget _buildTabs() {
     final palette = context.palette;
     return SizedBox(
@@ -73,7 +159,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: _tabs.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
           final selected = index == _selectedTab;
           return GestureDetector(
@@ -100,7 +186,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     );
   }
 
-  /// Một thẻ đơn hàng với badge trạng thái và nút "Đặt lại".
   Widget _buildOrderCard(OrderHistoryItem order) {
     final palette = context.palette;
     return Container(
@@ -124,12 +209,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           ),
           const SizedBox(height: 6),
           Text(order.date,
-              style:
-                  AppTextStyles.caption.copyWith(color: palette.textSecondary)),
+              style: AppTextStyles.caption.copyWith(color: palette.textSecondary)),
           const SizedBox(height: 6),
           Text(order.items,
-              style:
-                  AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
+              style: AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 10),
@@ -138,8 +221,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(Formatters.price(order.total),
-                  style: AppTextStyles.subtitle
-                      .copyWith(color: palette.textPrimary)),
+                  style:
+                      AppTextStyles.subtitle.copyWith(color: palette.textPrimary)),
               _buildAction(order),
             ],
           ),
@@ -148,7 +231,6 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     );
   }
 
-  /// Badge màu theo trạng thái đơn.
   Widget _buildBadge(OrderStatus status) {
     final palette = context.palette;
     late final String text;
@@ -160,11 +242,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
         break;
       case OrderStatus.completed:
         text = 'Hoàn thành';
-        color = const Color(0xFF3B82F6); // xanh dương
+        color = const Color(0xFF3B82F6);
         break;
       case OrderStatus.cancelled:
         text = 'Đã hủy';
-        color = const Color(0xFFEF4444); // đỏ
+        color = const Color(0xFFEF4444);
         break;
     }
     return Container(
@@ -179,17 +261,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     );
   }
 
-  /// Nút hành động: "Theo dõi" khi đang giao, "Đặt lại" khi đã xong.
   Widget _buildAction(OrderHistoryItem order) {
     final palette = context.palette;
     if (order.status == OrderStatus.cancelled) return const SizedBox.shrink();
-
     final isDelivering = order.status == OrderStatus.delivering;
     return GestureDetector(
       onTap: () {
         if (isDelivering) {
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => const OrderTrackingScreen()));
+          Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const OrderTrackingScreen()));
         }
       },
       child: Container(

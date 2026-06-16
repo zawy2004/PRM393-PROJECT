@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
+import '../database/database_service.dart';
+import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/app_header.dart';
 import '../widgets/primary_button.dart';
 import 'main_shell.dart';
 
-/// Màn hình đăng ký: họ tên, email, mật khẩu, xác nhận mật khẩu.
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -14,13 +15,70 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _nameCtrl = TextEditingController();
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _confirmCtrl = TextEditingController();
   bool _obscure = true;
+  bool _loading = false;
 
-  void _register() {
-    // Bỏ qua xác thực - vào thẳng app demo.
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    _confirmCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _register() async {
+    final name = _nameCtrl.text.trim();
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
+    final confirm = _confirmCtrl.text;
+
+    if (name.isEmpty || email.isEmpty || password.isEmpty) {
+      _snack('Vui lòng nhập đầy đủ thông tin');
+      return;
+    }
+    if (!email.contains('@')) {
+      _snack('Email không hợp lệ');
+      return;
+    }
+    if (password.length < 6) {
+      _snack('Mật khẩu phải có ít nhất 6 ký tự');
+      return;
+    }
+    if (password != confirm) {
+      _snack('Mật khẩu xác nhận không khớp');
+      return;
+    }
+
+    setState(() => _loading = true);
+    final user = await DatabaseService.instance.registerUser(
+      email: email,
+      password: password,
+      fullName: name,
+    );
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    if (user == null) {
+      _snack('Email này đã được đăng ký, vui lòng dùng email khác');
+      return;
+    }
+
+    await SessionController.instance.startSession(user);
+    if (!mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const MainShell()),
       (route) => false,
+    );
+  }
+
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -46,16 +104,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       style: AppTextStyles.bodyLarge
                           .copyWith(color: palette.textSecondary)),
                   const SizedBox(height: 32),
-                  _field(hint: 'Họ và tên', icon: Icons.person_outline),
+                  _field(hint: 'Họ và tên', icon: Icons.person_outline,
+                      controller: _nameCtrl),
                   const SizedBox(height: 16),
                   _field(
                       hint: 'Email',
                       icon: Icons.mail_outline,
+                      controller: _emailCtrl,
                       keyboardType: TextInputType.emailAddress),
                   const SizedBox(height: 16),
                   _field(
                     hint: 'Mật khẩu',
                     icon: Icons.lock_outline,
+                    controller: _passwordCtrl,
                     obscure: _obscure,
                     suffix: IconButton(
                       onPressed: () => setState(() => _obscure = !_obscure),
@@ -72,10 +133,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   _field(
                       hint: 'Xác nhận mật khẩu',
                       icon: Icons.lock_outline,
+                      controller: _confirmCtrl,
                       obscure: true),
                   const SizedBox(height: 28),
                   PrimaryButton(
-                      label: 'Đăng ký', radius: 12, onPressed: _register),
+                    label: _loading ? 'Đang đăng ký...' : 'Đăng ký',
+                    radius: 12,
+                    onPressed: _loading ? null : _register,
+                  ),
                   const SizedBox(height: 20),
                   Center(
                     child: GestureDetector(
@@ -110,12 +175,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _field({
     required String hint,
     required IconData icon,
+    required TextEditingController controller,
     bool obscure = false,
     Widget? suffix,
     TextInputType? keyboardType,
   }) {
     final palette = context.palette;
     return TextField(
+      controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
       style: AppTextStyles.bodyLarge.copyWith(color: palette.textPrimary),
