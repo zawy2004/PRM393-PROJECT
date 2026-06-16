@@ -40,6 +40,11 @@ dependencies:
   # Hiệu ứng pháo giấy khi "match" món ăn.
   confetti: ^0.7.0
 
+  # Cơ sở dữ liệu SQLite cho Android/iOS.
+  sqflite: ^2.3.3
+  # Xử lý đường dẫn file database.
+  path: ^1.9.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

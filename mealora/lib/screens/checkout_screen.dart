@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import '../data/sample_data.dart';
+import '../database/database_service.dart';
 import '../models/address.dart';
+import '../models/order.dart';
 import '../models/payment_method.dart';
+import '../state/cart_controller.dart';
+import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
 import '../utils/formatters.dart';
@@ -23,15 +27,59 @@ class CheckoutScreen extends StatefulWidget {
 class _CheckoutScreenState extends State<CheckoutScreen> {
   static const List<PaymentMethod> _methods = SampleData.paymentMethods;
 
-  // Địa chỉ mặc định (ưu tiên isDefault).
   Address get _address => SampleData.addresses.firstWhere(
         (a) => a.isDefault,
         orElse: () => SampleData.addresses.first,
       );
 
   int _selectedMethod = 0;
+  bool _loading = false;
 
-  void _placeOrder() {
+  Future<void> _placeOrder() async {
+    setState(() => _loading = true);
+
+    final cart = CartController.instance;
+    final userId = SessionController.instance.userId;
+    final method = _methods[_selectedMethod];
+    final now = DateTime.now();
+    final orderId = 'MP${now.millisecondsSinceEpoch}';
+
+    final order = Order(
+      id: '#$orderId',
+      userId: userId,
+      subtotal: cart.subtotal,
+      discount: cart.subtotal - widget.total < 0 ? 0 : cart.subtotal - widget.total,
+      shippingFee: widget.total > cart.subtotal ? widget.total - cart.subtotal : 0,
+      total: widget.total,
+      deliveryPlan: 'Giao hàng',
+      addressDetail: _address.detail,
+      paymentLabel: method.label,
+      status: 'delivering',
+      createdAt: now.millisecondsSinceEpoch,
+    );
+
+    final items = cart.lines
+        .map((l) => OrderItem(
+              orderId: '#$orderId',
+              mealId: l.item.id,
+              mealName: l.item.name,
+              price: l.item.price,
+              quantity: l.quantity,
+            ))
+        .toList();
+
+    await DatabaseService.instance.placeOrder(order, items);
+    await DatabaseService.instance.pushNotification(
+      userId: userId,
+      title: 'Đơn hàng đang được giao',
+      description: 'Shipper đang trên đường giao đơn #$orderId đến bạn.',
+      iconLabel: 'delivery_dining',
+    );
+
+    cart.clear();
+
+    if (!mounted) return;
+    setState(() => _loading = false);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const OrderTrackingScreen()),
     );
@@ -229,7 +277,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 16),
             PrimaryButton(
-                label: 'Đặt hàng', height: 48, onPressed: _placeOrder),
+                label: _loading ? 'Đang đặt hàng...' : 'Đặt hàng',
+                height: 48,
+                onPressed: _loading ? null : _placeOrder),
           ],
         ),
       ),

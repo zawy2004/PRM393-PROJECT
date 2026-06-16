@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
+import '../database/database_service.dart';
+import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/primary_button.dart';
 import 'main_shell.dart';
 import 'register_screen.dart';
 
-/// Màn hình đăng nhập: tiêu đề chào mừng, ô email/mật khẩu,
-/// nút đăng nhập, đăng nhập Google và link đăng ký.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -15,12 +15,47 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
   bool _obscurePassword = true;
+  bool _loading = false;
 
-  void _login() {
-    // Bỏ qua xác thực - chuyển thẳng vào app demo.
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _login() async {
+    final email = _emailCtrl.text.trim();
+    final password = _passwordCtrl.text;
+
+    if (email.isEmpty || password.isEmpty) {
+      _snack('Vui lòng nhập đầy đủ email và mật khẩu');
+      return;
+    }
+
+    setState(() => _loading = true);
+    final user = await DatabaseService.instance.login(email, password);
+    if (!mounted) return;
+    setState(() => _loading = false);
+
+    if (user == null) {
+      _snack('Email hoặc mật khẩu không đúng');
+      return;
+    }
+
+    await SessionController.instance.startSession(user);
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const MainShell()),
+    );
+  }
+
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -47,18 +82,18 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 40),
 
-              // Ô nhập email.
               _InputField(
                 hint: 'Email',
                 icon: Icons.mail_outline,
+                controller: _emailCtrl,
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 16),
 
-              // Ô nhập mật khẩu kèm nút ẩn/hiện.
               _InputField(
                 hint: 'Mật khẩu',
                 icon: Icons.lock_outline,
+                controller: _passwordCtrl,
                 obscure: _obscurePassword,
                 suffix: IconButton(
                   onPressed: () =>
@@ -74,15 +109,17 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 28),
 
-              PrimaryButton(label: 'Đăng nhập', radius: 12, onPressed: _login),
+              PrimaryButton(
+                label: _loading ? 'Đang đăng nhập...' : 'Đăng nhập',
+                radius: 12,
+                onPressed: _loading ? null : _login,
+              ),
               const SizedBox(height: 28),
 
-              // Đường kẻ "hoặc tiếp tục với".
               Center(
                 child: Text(
                   'hoặc tiếp tục với',
-                  style: AppTextStyles.bodySmall
-                      .copyWith(color: palette.textHint),
+                  style: AppTextStyles.bodySmall.copyWith(color: palette.textHint),
                 ),
               ),
               const SizedBox(height: 16),
@@ -94,7 +131,6 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 40),
 
-              // Link đăng ký.
               Center(
                 child: GestureDetector(
                   onTap: () => Navigator.of(context).push(
@@ -126,13 +162,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 }
 
-/// Ô nhập liệu bo góc dùng riêng cho màn Login.
 class _InputField extends StatelessWidget {
   final String hint;
   final IconData icon;
   final bool obscure;
   final Widget? suffix;
   final TextInputType? keyboardType;
+  final TextEditingController? controller;
 
   const _InputField({
     required this.hint,
@@ -140,12 +176,14 @@ class _InputField extends StatelessWidget {
     this.obscure = false,
     this.suffix,
     this.keyboardType,
+    this.controller,
   });
 
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
     return TextField(
+      controller: controller,
       obscureText: obscure,
       keyboardType: keyboardType,
       style: AppTextStyles.bodyLarge.copyWith(color: palette.textPrimary),
