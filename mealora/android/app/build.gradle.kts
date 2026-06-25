@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -5,6 +7,14 @@ plugins {
     // Đọc google-services.json để cấu hình Firebase (Google Sign-In).
     id("com.google.gms.google-services")
 }
+
+// Đọc mapsApiKey từ local.properties (file không commit lên git) để tránh
+// hardcode API key thẳng vào AndroidManifest.xml đang được track bởi git.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
+}
+val mapsApiKey: String = localProperties.getProperty("mapsApiKey") ?: ""
 
 android {
     namespace = "com.example.mealora"
@@ -15,7 +25,7 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    
+
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
@@ -27,6 +37,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     buildTypes {

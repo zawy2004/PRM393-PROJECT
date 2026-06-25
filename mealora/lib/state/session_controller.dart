@@ -59,6 +59,12 @@ class SessionController {
     return true;
   }
 
+  /// Cập nhật user hiện tại trong bộ nhớ (gọi sau khi sửa thông tin cá nhân)
+  /// để các màn hình đang mở (ví dụ header Profile) phản ánh ngay lập tức.
+  void updateCurrentUser(User user) {
+    _currentUser = user;
+  }
+
   /// Xóa phiên đã lưu; lần mở app sau sẽ phải đăng nhập lại.
   Future<void> logout() async {
     CartController.instance.clear();
