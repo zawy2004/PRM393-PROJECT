@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../database/database_service.dart';
+import '../services/auth_service.dart';
 import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
@@ -51,6 +53,33 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const MainShell()),
     );
+  }
+
+  Future<void> _loginWithGoogle() async {
+    setState(() => _loading = true);
+    try {
+      final result = await AuthService.instance.signInWithGoogle();
+      final user = await DatabaseService.instance.loginWithGoogle(
+        email: result.email,
+        fullName: result.displayName,
+      );
+      await SessionController.instance.startSession(user);
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const MainShell()),
+      );
+    } on GoogleSignInException catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      // Người dùng tự hủy chọn tài khoản - không cần báo lỗi.
+      if (e.code != GoogleSignInExceptionCode.canceled) {
+        _snack('Đăng nhập Google thất bại: ${e.description ?? e.code}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _snack('Lỗi đăng nhập Google: $e');
+    }
   }
 
   void _snack(String msg) {
@@ -126,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               OutlineButton(
                 label: 'Google',
-                onPressed: _login,
+                onPressed: _loading ? null : _loginWithGoogle,
                 leading: const Icon(Icons.g_mobiledata, size: 28, color: Colors.red),
               ),
               const SizedBox(height: 40),

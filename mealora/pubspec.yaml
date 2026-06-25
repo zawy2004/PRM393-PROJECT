@@ -45,6 +45,13 @@ dependencies:
   # Xử lý đường dẫn file database.
   path: ^1.9.1
 
+  # Thanh toán MoMo (sandbox demo).
+  momo_payment_flutter: ^1.0.2
+  firebase_core: ^4.11.0
+  firebase_auth: ^6.5.4
+  google_sign_in: ^7.2.0
+  shared_preferences: ^2.5.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "78200451431",
+    "project_id": "mealora-4dd12",
+    "storage_bucket": "mealora-4dd12.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:78200451431:android:daf51f0d95551aa0dabfc2",
+        "android_client_info": {
+          "package_name": "com.example.mealora"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "78200451431-icpekjtf3apfk84pu6th92ubb2v444f0.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.mealora",
+            "certificate_hash": "5a1f7a9f1accc141dea94198646164d811a2ca35"
+          }
+        },
+        {
+          "client_id": "78200451431-0bto1ciupp4t9oj2m6kv0l4g265ilqq6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCYfrJa_Wn5qdt_xflJijw_cyurdId7cyU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "78200451431-0bto1ciupp4t9oj2m6kv0l4g265ilqq6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

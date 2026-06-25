@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../state/favorites_controller.dart';
+import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/theme_controller.dart';
@@ -11,7 +12,9 @@ import 'login_screen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  void _logout(BuildContext context) {
+  Future<void> _logout(BuildContext context) async {
+    await SessionController.instance.logout();
+    if (!context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
@@ -42,9 +45,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  /// Header nền xanh chứa avatar + tên + email.
+  /// Header nền xanh chứa avatar + tên + email (lấy từ phiên đăng nhập).
   Widget _buildHeader(BuildContext context) {
     final primary = context.palette.primary;
+    final user = SessionController.instance.currentUser;
+    final name = user?.fullName ?? 'Khách';
+    final email = user?.email ?? '';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return Container(
       width: double.infinity,
       color: primary,
@@ -57,18 +64,18 @@ class ProfileScreen extends StatelessWidget {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: Colors.white.withValues(alpha: 0.2),
-                child: const Text('L',
-                    style: TextStyle(
+                child: Text(initial,
+                    style: const TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
               ),
               const SizedBox(height: 12),
-              Text('clone',
+              Text(name,
                   style:
                       AppTextStyles.titleLarge.copyWith(color: Colors.white, fontSize: 22)),
               const SizedBox(height: 4),
-              Text('clone@email.com',
+              Text(email,
                   style: AppTextStyles.bodySmall
                       .copyWith(color: Colors.white.withValues(alpha: 0.85))),
             ],
@@ -144,18 +151,21 @@ class ProfileScreen extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
+      // Dùng Material (thay vì Container+BoxDecoration) làm ancestor trực tiếp
+      // để ListTile vẽ ink splash đúng chỗ - tránh bị nền che mất hiệu ứng chạm.
+      child: Material(
         color: palette.surface,
         borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          for (int i = 0; i < items.length; i++) ...[
-            items[i],
-            if (i != items.length - 1)
-              Divider(height: 1, indent: 56, endIndent: 16, color: palette.border),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            for (int i = 0; i < items.length; i++) ...[
+              items[i],
+              if (i != items.length - 1)
+                Divider(height: 1, indent: 56, endIndent: 16, color: palette.border),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
