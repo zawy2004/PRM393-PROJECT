@@ -1,17 +1,27 @@
 import 'package:flutter/material.dart';
 import '../state/favorites_controller.dart';
+import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/theme_controller.dart';
+import 'addresses_screen.dart';
 import 'favorites_screen.dart';
+import 'help_support_screen.dart';
+import 'language_screen.dart';
 import 'login_screen.dart';
+import 'payment_methods_screen.dart';
+import 'personal_info_screen.dart';
+import 'subscription_screen.dart';
+import 'terms_screen.dart';
 
 /// Màn hình hồ sơ: header xanh với avatar, thẻ thống kê, danh sách menu
 /// (gồm công tắc Chế độ tối) và nút đăng xuất.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
-  void _logout(BuildContext context) {
+  Future<void> _logout(BuildContext context) async {
+    await SessionController.instance.logout();
+    if (!context.mounted) return;
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LoginScreen()),
       (route) => false,
@@ -42,9 +52,13 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  /// Header nền xanh chứa avatar + tên + email.
+  /// Header nền xanh chứa avatar + tên + email (lấy từ phiên đăng nhập).
   Widget _buildHeader(BuildContext context) {
     final primary = context.palette.primary;
+    final user = SessionController.instance.currentUser;
+    final name = user?.fullName ?? 'Khách';
+    final email = user?.email ?? '';
+    final initial = name.isNotEmpty ? name[0].toUpperCase() : '?';
     return Container(
       width: double.infinity,
       color: primary,
@@ -57,18 +71,18 @@ class ProfileScreen extends StatelessWidget {
               CircleAvatar(
                 radius: 40,
                 backgroundColor: Colors.white.withValues(alpha: 0.2),
-                child: const Text('L',
-                    style: TextStyle(
+                child: Text(initial,
+                    style: const TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.bold,
                         color: Colors.white)),
               ),
               const SizedBox(height: 12),
-              Text('clone',
+              Text(name,
                   style:
                       AppTextStyles.titleLarge.copyWith(color: Colors.white, fontSize: 22)),
               const SizedBox(height: 4),
-              Text('clone@email.com',
+              Text(email,
                   style: AppTextStyles.bodySmall
                       .copyWith(color: Colors.white.withValues(alpha: 0.85))),
             ],
@@ -127,35 +141,70 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildMenu(BuildContext context) {
     final palette = context.palette;
     final items = <Widget>[
-      _menuRow(context, Icons.person_outline, 'Thông tin cá nhân'),
+      _menuRow(context, Icons.person_outline, 'Thông tin cá nhân', onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const PersonalInfoScreen()),
+        );
+      }),
       _menuRow(context, Icons.favorite_border, 'Món yêu thích', onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const FavoritesScreen()),
         );
       }),
-      _menuRow(context, Icons.location_on_outlined, 'Địa chỉ giao hàng'),
-      _menuRow(context, Icons.payment_outlined, 'Phương thức thanh toán'),
-      _menuRow(context, Icons.card_membership_outlined, 'Gói đăng ký của tôi'),
+      _menuRow(context, Icons.location_on_outlined, 'Địa chỉ giao hàng',
+          onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AddressesScreen()),
+        );
+      }),
+      _menuRow(context, Icons.payment_outlined, 'Phương thức thanh toán',
+          onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const PaymentMethodsScreen()),
+        );
+      }),
+      _menuRow(context, Icons.card_membership_outlined, 'Gói đăng ký của tôi',
+          onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SubscriptionScreen()),
+        );
+      }),
       _buildDarkModeRow(context), // Hàng có công tắc chế độ tối.
-      _menuRow(context, Icons.language_outlined, 'Ngôn ngữ'),
-      _menuRow(context, Icons.help_outline, 'Trợ giúp & hỗ trợ'),
-      _menuRow(context, Icons.description_outlined, 'Điều khoản & chính sách'),
+      _menuRow(context, Icons.language_outlined, 'Ngôn ngữ', onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const LanguageScreen()),
+        );
+      }),
+      _menuRow(context, Icons.help_outline, 'Trợ giúp & hỗ trợ', onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const HelpSupportScreen()),
+        );
+      }),
+      _menuRow(context, Icons.description_outlined, 'Điều khoản & chính sách',
+          onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const TermsScreen()),
+        );
+      }),
     ];
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
+      // Dùng Material (thay vì Container+BoxDecoration) làm ancestor trực tiếp
+      // để ListTile vẽ ink splash đúng chỗ - tránh bị nền che mất hiệu ứng chạm.
+      child: Material(
         color: palette.surface,
         borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        children: [
-          for (int i = 0; i < items.length; i++) ...[
-            items[i],
-            if (i != items.length - 1)
-              Divider(height: 1, indent: 56, endIndent: 16, color: palette.border),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          children: [
+            for (int i = 0; i < items.length; i++) ...[
+              items[i],
+              if (i != items.length - 1)
+                Divider(height: 1, indent: 56, endIndent: 16, color: palette.border),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }

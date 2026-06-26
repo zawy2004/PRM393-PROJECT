@@ -41,6 +41,25 @@ class DatabaseService {
     return user;
   }
 
+  /// Đăng nhập bằng tài khoản Google: nếu email đã có user cục bộ thì trả về
+  /// user đó (login), nếu chưa có thì tự tạo mới (register) - không cần mật khẩu.
+  Future<User> loginWithGoogle({
+    required String email,
+    required String fullName,
+  }) async {
+    final existing = await UserDao.instance.findByEmail(email);
+    if (existing != null) return existing;
+    final user = User(
+      id: 'u_${DateTime.now().millisecondsSinceEpoch}',
+      email: email,
+      password: '', // Đăng nhập qua Google, không dùng mật khẩu cục bộ.
+      fullName: fullName,
+      createdAt: DateTime.now().millisecondsSinceEpoch,
+    );
+    await UserDao.instance.insert(user);
+    return user;
+  }
+
   Future<User?> login(String email, String password) async {
     final user = await UserDao.instance.findByEmail(email);
     if (user == null || user.password != password) return null;

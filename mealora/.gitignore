@@ -43,3 +43,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Firebase config chứa API key - không commit lên git (mỗi máy/dev tự lấy từ
+# Firebase Console > Project settings > Your apps > Android app > google-services.json).
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist
+**/firebase_options.dart

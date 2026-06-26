@@ -1,11 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
 import 'login_screen.dart';
+import 'main_shell.dart';
 
 /// Màn hình khởi động: nền xanh, logo + tên app + thanh loading.
-/// Tự chuyển sang Login sau 2.5 giây.
+/// Sau 2.5 giây, tự đăng nhập lại nếu có phiên đã lưu (chưa logout),
+/// ngược lại chuyển sang Login.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -16,6 +19,7 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller;
+  late final Future<bool> _restoreFuture;
 
   @override
   void initState() {
@@ -26,14 +30,19 @@ class _SplashScreenState extends State<SplashScreen>
       duration: const Duration(milliseconds: 2200),
     )..forward();
 
-    // Điều hướng sang Login khi loading xong.
-    Timer(const Duration(milliseconds: 2500), _goToLogin);
+    // Thử khôi phục phiên đăng nhập song song với animation splash.
+    _restoreFuture = SessionController.instance.restoreSession();
+
+    Timer(const Duration(milliseconds: 2500), _navigateNext);
   }
 
-  void _goToLogin() {
+  Future<void> _navigateNext() async {
+    final restored = await _restoreFuture;
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(
+        builder: (_) => restored ? const MainShell() : const LoginScreen(),
+      ),
     );
   }
 

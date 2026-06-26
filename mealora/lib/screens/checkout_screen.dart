@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:momo_payment_flutter/momo_payment_flutter.dart';
 import '../data/sample_data.dart';
 import '../database/database_service.dart';
 import '../models/address.dart';
 import '../models/order.dart';
 import '../models/payment_method.dart';
+import '../services/momo_service.dart';
 import '../state/cart_controller.dart';
 import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
@@ -24,7 +26,8 @@ class CheckoutScreen extends StatefulWidget {
   State<CheckoutScreen> createState() => _CheckoutScreenState();
 }
 
-class _CheckoutScreenState extends State<CheckoutScreen> {
+class _CheckoutScreenState extends State<CheckoutScreen>
+    with WidgetsBindingObserver {
   static const List<PaymentMethod> _methods = SampleData.paymentMethods;
 
   Address get _address => SampleData.addresses.firstWhere(
@@ -34,13 +37,130 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   int _selectedMethod = 0;
   bool _loading = false;
+  String _loadingLabel = 'Đang đặt hàng...';
+
+  // Lưu lại orderId/requestId của giao dịch MoMo đang chờ xác nhận, để khi
+  // app resume (người dùng quay lại từ app/trang MoMo) thì kiểm tra trạng thái.
+  String? _pendingMomoOrderId;
+  String? _pendingMomoRequestId;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _pendingMomoOrderId != null) {
+      _checkMomoStatus();
+    }
+  }
+
+  bool _isMomo(PaymentMethod method) =>
+      method.label.toLowerCase().contains('momo');
 
   Future<void> _placeOrder() async {
-    setState(() => _loading = true);
+    final method = _methods[_selectedMethod];
+    if (_isMomo(method)) {
+      await _payWithMomo();
+    } else {
+      await _finalizeOrder(method.label);
+    }
+  }
+
+  /// Tạo yêu cầu thanh toán MoMo (sandbox) và mở trang thanh toán.
+  /// Kết quả sẽ được xác nhận ở [_checkMomoStatus] khi app resume.
+  Future<void> _payWithMomo() async {
+    setState(() {
+      _loading = true;
+      _loadingLabel = 'Đang khởi tạo thanh toán MoMo...';
+    });
+
+    final now = DateTime.now();
+    final orderId = 'MM${now.millisecondsSinceEpoch}';
+    final requestId = 'RQ${now.millisecondsSinceEpoch}';
+
+    try {
+      final info = MomoPaymentInfo(
+        orderId: orderId,
+        orderInfo: 'Thanh toan don hang Mealora',
+        amount: widget.total,
+        redirectUrl: MomoService.redirectUrl,
+        ipnUrl: MomoService.ipnUrl,
+        requestId: requestId,
+        requestType: 'captureWallet',
+        lang: 'vi',
+      );
+
+      final res = await MomoService.instance.momo.createPayment(info);
+      if (res.payUrl == null) {
+        _snack('Không tạo được thanh toán MoMo: ${res.message}');
+        setState(() => _loading = false);
+        return;
+      }
+
+      _pendingMomoOrderId = orderId;
+      _pendingMomoRequestId = requestId;
+      setState(() => _loadingLabel = 'Đang chờ xác nhận từ MoMo...');
+      await MomoService.instance.momo.openPaymentPage(res.payUrl!);
+      // Giữ trạng thái loading; sẽ được giải quyết ở didChangeAppLifecycleState
+      // khi người dùng quay lại app sau khi thanh toán trên MoMo.
+    } catch (e) {
+      _pendingMomoOrderId = null;
+      _pendingMomoRequestId = null;
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _snack('Lỗi thanh toán MoMo: $e');
+    }
+  }
+
+  Future<void> _checkMomoStatus() async {
+    final orderId = _pendingMomoOrderId!;
+    final requestId = _pendingMomoRequestId!;
+    _pendingMomoOrderId = null;
+    _pendingMomoRequestId = null;
+
+    if (!mounted) return;
+    setState(() => _loadingLabel = 'Đang kiểm tra trạng thái thanh toán...');
+
+    try {
+      final res = await MomoService.instance.momo
+          .checkStatus(orderId: orderId, requestId: requestId);
+
+      if (res.resultCode == 0) {
+        await _finalizeOrder('Ví MoMo');
+      } else {
+        if (!mounted) return;
+        setState(() => _loading = false);
+        _snack('Thanh toán MoMo không thành công (${res.resultCode}): '
+            '${res.message}');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _snack('Lỗi kiểm tra trạng thái MoMo: $e');
+    }
+  }
+
+  /// Lưu đơn hàng vào DB, đẩy thông báo, xóa giỏ hàng rồi chuyển sang theo dõi.
+  /// Dùng chung cho cả thanh toán tiền mặt/thẻ (gọi trực tiếp) và MoMo
+  /// (gọi sau khi [_checkMomoStatus] xác nhận thành công).
+  Future<void> _finalizeOrder(String paymentLabel) async {
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _loadingLabel = 'Đang đặt hàng...';
+    });
 
     final cart = CartController.instance;
     final userId = SessionController.instance.userId;
-    final method = _methods[_selectedMethod];
     final now = DateTime.now();
     final orderId = 'MP${now.millisecondsSinceEpoch}';
 
@@ -53,7 +173,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       total: widget.total,
       deliveryPlan: 'Giao hàng',
       addressDetail: _address.detail,
-      paymentLabel: method.label,
+      paymentLabel: paymentLabel,
       status: 'delivering',
       createdAt: now.millisecondsSinceEpoch,
     );
@@ -82,6 +202,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     setState(() => _loading = false);
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const OrderTrackingScreen()),
+    );
+  }
+
+  void _snack(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
     );
   }
 
@@ -277,7 +403,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             ),
             const SizedBox(height: 16),
             PrimaryButton(
-                label: _loading ? 'Đang đặt hàng...' : 'Đặt hàng',
+                label: _loading ? _loadingLabel : 'Đặt hàng',
                 height: 48,
                 onPressed: _loading ? null : _placeOrder),
           ],
