@@ -25,8 +25,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  static const int _pageSize = 8;
+
   int _selectedCategory = 0;
   String _query = '';
+  int _currentPage = 0;
 
   /// Lọc món theo danh mục đang chọn VÀ từ khóa tìm kiếm.
   List<FoodItem> get _visibleFoods {
@@ -37,6 +40,16 @@ class _HomeScreenState extends State<HomeScreen> {
       final matchQuery = q.isEmpty || f.name.toLowerCase().contains(q);
       return matchCat && matchQuery;
     }).toList();
+  }
+
+  int _totalPages(int itemCount) => (itemCount / _pageSize).ceil();
+
+  /// Cắt danh sách đã lọc theo trang hiện tại.
+  List<FoodItem> _pagedFoods(List<FoodItem> source) {
+    final start = _currentPage * _pageSize;
+    if (start >= source.length) return const [];
+    final end = (start + _pageSize).clamp(0, source.length);
+    return source.sublist(start, end);
   }
 
   void _openDetail(FoodItem item) {
@@ -63,7 +76,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildHeader(),
                 const SizedBox(height: 16),
                 SearchField(
-                  onChanged: (v) => setState(() => _query = v),
+                  onChanged: (v) => setState(() {
+                    _query = v;
+                    _currentPage = 0;
+                  }),
                 ),
                 const SizedBox(height: 16),
                 _buildCategories(),
@@ -77,6 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           _buildFoodGrid(),
+          SliverToBoxAdapter(child: _buildPagination()),
           const SliverToBoxAdapter(child: SizedBox(height: 16)),
         ],
       ),
@@ -129,16 +146,21 @@ class _HomeScreenState extends State<HomeScreen> {
         itemBuilder: (context, index) => CategoryChip(
           label: SampleData.categories[index],
           isSelected: index == _selectedCategory,
-          onTap: () => setState(() => _selectedCategory = index),
+          onTap: () => setState(() {
+            _selectedCategory = index;
+            _currentPage = 0;
+          }),
         ),
       ),
     );
   }
 
   /// Lưới món ăn responsive: 2 cột trên điện thoại, tăng cột trên màn rộng.
+  /// Chỉ hiển thị các món của trang hiện tại (phân trang ở [_buildPagination]).
   Widget _buildFoodGrid() {
-    final foods = _visibleFoods;
-    if (foods.isEmpty) return _buildNoResult();
+    final all = _visibleFoods;
+    if (all.isEmpty) return _buildNoResult();
+    final foods = _pagedFoods(all);
     return SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       sliver: SliverLayoutBuilder(
@@ -162,6 +184,41 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// Thanh điều hướng trang: nút Trước/Sau + số trang hiện tại.
+  /// Ẩn hoàn toàn khi danh sách (sau khi lọc) chỉ vừa 1 trang.
+  Widget _buildPagination() {
+    final total = _totalPages(_visibleFoods.length);
+    if (total <= 1) return const SizedBox.shrink();
+    final palette = context.palette;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            onPressed: _currentPage > 0
+                ? () => setState(() => _currentPage -= 1)
+                : null,
+            icon: const Icon(Icons.chevron_left),
+            color: palette.textPrimary,
+            disabledColor: palette.textHint,
+          ),
+          Text('Trang ${_currentPage + 1} / $total',
+              style: AppTextStyles.bodySmall
+                  .copyWith(color: palette.textSecondary)),
+          IconButton(
+            onPressed: _currentPage < total - 1
+                ? () => setState(() => _currentPage += 1)
+                : null,
+            icon: const Icon(Icons.chevron_right),
+            color: palette.textPrimary,
+            disabledColor: palette.textHint,
+          ),
+        ],
       ),
     );
   }

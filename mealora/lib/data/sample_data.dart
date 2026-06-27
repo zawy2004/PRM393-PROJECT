@@ -59,6 +59,8 @@ class SampleData {
       name: 'Salad gà nướng mật ong',
       calories: 380,
       price: 65000,
+      imageUrl:
+          'https://images.pexels.com/photos/28647073/pexels-photo-28647073.jpeg?auto=compress&cs=tinysrgb&w=600',
       category: 'Salad',
       rating: 4.8,
       reviewCount: 128,
@@ -83,6 +85,8 @@ class SampleData {
       name: 'Cơm gạo lứt bò',
       calories: 420,
       price: 55000,
+      imageUrl:
+          'https://images.pexels.com/photos/31303466/pexels-photo-31303466.jpeg?auto=compress&cs=tinysrgb&w=600',
       category: 'Protein',
       rating: 4.7,
       reviewCount: 96,
@@ -100,6 +104,8 @@ class SampleData {
       name: 'Poke bowl cá hồi',
       calories: 450,
       price: 85000,
+      imageUrl:
+          'https://images.pexels.com/photos/15913488/pexels-photo-15913488.jpeg?auto=compress&cs=tinysrgb&w=600',
       category: 'Protein',
       rating: 4.9,
       reviewCount: 210,
@@ -116,6 +122,8 @@ class SampleData {
       name: 'Sandwich trứng',
       calories: 320,
       price: 45000,
+      imageUrl:
+          'https://images.pexels.com/photos/7663367/pexels-photo-7663367.jpeg?auto=compress&cs=tinysrgb&w=600',
       category: 'Low carb',
       rating: 4.5,
       reviewCount: 64,
@@ -133,6 +141,8 @@ class SampleData {
       name: 'Bowl đậu hũ rau củ',
       calories: 350,
       price: 50000,
+      imageUrl:
+          'https://images.pexels.com/photos/6271868/pexels-photo-6271868.jpeg?auto=compress&cs=tinysrgb&w=600',
       category: 'Vegan',
       rating: 4.6,
       reviewCount: 73,
@@ -149,6 +159,8 @@ class SampleData {
       name: 'Wrap gà cuốn rau',
       calories: 390,
       price: 60000,
+      imageUrl:
+          'https://images.pexels.com/photos/9624298/pexels-photo-9624298.jpeg?auto=compress&cs=tinysrgb&w=600',
       category: 'Low carb',
       rating: 4.7,
       reviewCount: 88,
@@ -164,6 +176,8 @@ class SampleData {
       name: 'Salad cá ngừ',
       calories: 340,
       price: 70000,
+      imageUrl:
+          'https://images.pexels.com/photos/12173347/pexels-photo-12173347.jpeg?auto=compress&cs=tinysrgb&w=600',
       category: 'Salad',
       rating: 4.8,
       reviewCount: 102,
@@ -180,6 +194,8 @@ class SampleData {
       name: 'Ức gà sốt tiêu đen',
       calories: 410,
       price: 68000,
+      imageUrl:
+          'https://images.pexels.com/photos/6107757/pexels-photo-6107757.jpeg?auto=compress&cs=tinysrgb&w=600',
       category: 'Protein',
       rating: 4.6,
       reviewCount: 77,
@@ -196,6 +212,8 @@ class SampleData {
       name: 'Smoothie bowl xoài',
       calories: 300,
       price: 55000,
+      imageUrl:
+          'https://images.pexels.com/photos/4099238/pexels-photo-4099238.jpeg?auto=compress&cs=tinysrgb&w=600',
       category: 'Vegan',
       rating: 4.9,
       reviewCount: 156,
@@ -212,6 +230,8 @@ class SampleData {
       name: 'Mì shirataki xào',
       calories: 280,
       price: 58000,
+      imageUrl:
+          'https://images.pexels.com/photos/2347311/pexels-photo-2347311.jpeg?auto=compress&cs=tinysrgb&w=600',
       category: 'Low carb',
       rating: 4.4,
       reviewCount: 51,
@@ -221,6 +241,232 @@ class SampleData {
       description:
           'Mì shirataki ít carb xào cùng tôm và rau củ, lý tưởng cho keto.',
       ingredients: ['Mì shirataki', 'Tôm', 'Ớt chuông', 'Hành tây', 'Sốt nấm'],
+      reviews: _reviewsB,
+    ),
+    FoodItem(
+      id: 'f11',
+      name: 'Cơm cuộn rau củ chay',
+      calories: 310,
+      price: 48000,
+      imageUrl:
+          'https://images.pexels.com/photos/7767695/pexels-photo-7767695.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Vegan',
+      rating: 4.6,
+      reviewCount: 67,
+      protein: 9,
+      carbs: 52,
+      fat: 7,
+      description:
+          'Cơm cuộn rong biển với dưa leo, cà rốt, bơ và trứng chiên, thanh '
+          'đạm và dễ ăn.',
+      ingredients: ['Cơm', 'Rong biển', 'Dưa leo', 'Cà rốt', 'Bơ'],
+      reviews: _reviewsA,
+    ),
+    FoodItem(
+      id: 'f12',
+      name: 'Bò bít tết khoai tây nghiền',
+      calories: 480,
+      price: 95000,
+      imageUrl:
+          'https://images.pexels.com/photos/33144660/pexels-photo-33144660.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Protein',
+      rating: 4.8,
+      reviewCount: 142,
+      protein: 38,
+      carbs: 30,
+      fat: 22,
+      description:
+          'Bít tết bò áp chảo ăn kèm khoai tây nghiền kem béo và rau chân vịt.',
+      ingredients: ['Thịt bò', 'Khoai tây', 'Rau chân vịt', 'Bơ', 'Tiêu đen'],
+      reviews: _reviewsB,
+    ),
+    FoodItem(
+      id: 'f13',
+      name: 'Bowl quinoa chay nhiều màu',
+      calories: 360,
+      price: 62000,
+      imageUrl:
+          'https://images.pexels.com/photos/17597408/pexels-photo-17597408.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Vegan',
+      rating: 4.7,
+      reviewCount: 91,
+      protein: 13,
+      carbs: 48,
+      fat: 14,
+      description:
+          'Buddha bowl quinoa với bơ, đậu gà, khoai lang và rau chân vịt, '
+          'đủ sắc màu và dinh dưỡng.',
+      ingredients: ['Quinoa', 'Bơ', 'Đậu gà', 'Khoai lang', 'Rau chân vịt'],
+      reviews: _reviewsA,
+    ),
+    FoodItem(
+      id: 'f14',
+      name: 'Súp lơ xanh hấp',
+      calories: 150,
+      price: 35000,
+      imageUrl:
+          'https://images.pexels.com/photos/3872367/pexels-photo-3872367.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Low carb',
+      rating: 4.4,
+      reviewCount: 38,
+      protein: 6,
+      carbs: 18,
+      fat: 4,
+      description:
+          'Súp lơ xanh và cà rốt hấp giữ nguyên dưỡng chất, món ăn kèm '
+          'thanh nhẹ.',
+      ingredients: ['Súp lơ xanh', 'Cà rốt', 'Dầu olive', 'Muối', 'Tiêu'],
+      reviews: _reviewsB,
+    ),
+    FoodItem(
+      id: 'f15',
+      name: 'Cá hồi nướng vỉ',
+      calories: 430,
+      price: 99000,
+      imageUrl:
+          'https://images.pexels.com/photos/36734954/pexels-photo-36734954.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Protein',
+      rating: 4.9,
+      reviewCount: 175,
+      protein: 36,
+      carbs: 8,
+      fat: 26,
+      description:
+          'Cá hồi nướng vỉ giữ trọn vị béo ngậy, ăn kèm rau củ nướng.',
+      ingredients: ['Cá hồi', 'Chanh', 'Dầu olive', 'Rau củ nướng', 'Tiêu đen'],
+      reviews: _reviewsA,
+    ),
+    FoodItem(
+      id: 'f16',
+      name: 'Salad Hy Lạp phô mai feta',
+      calories: 290,
+      price: 58000,
+      imageUrl:
+          'https://images.pexels.com/photos/1211887/pexels-photo-1211887.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Salad',
+      rating: 4.7,
+      reviewCount: 84,
+      protein: 11,
+      carbs: 16,
+      fat: 20,
+      description:
+          'Salad kiểu Hy Lạp với phô mai feta, ô liu, cà chua và dưa leo, '
+          'sốt dầu olive chua nhẹ.',
+      ingredients: ['Phô mai feta', 'Ô liu', 'Cà chua', 'Dưa leo', 'Dầu olive'],
+      reviews: _reviewsB,
+    ),
+    FoodItem(
+      id: 'f17',
+      name: 'Sandwich rau củ sốt hummus',
+      calories: 330,
+      price: 47000,
+      imageUrl:
+          'https://images.pexels.com/photos/17430516/pexels-photo-17430516.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Vegan',
+      rating: 4.5,
+      reviewCount: 56,
+      protein: 12,
+      carbs: 42,
+      fat: 10,
+      description:
+          'Sandwich nguyên cám với rau củ tươi và sốt hummus béo bùi, '
+          'thuần chay.',
+      ingredients: ['Bánh mì nguyên cám', 'Sốt hummus', 'Cà chua', 'Xà lách', 'Dưa leo'],
+      reviews: _reviewsA,
+    ),
+    FoodItem(
+      id: 'f18',
+      name: 'Tôm xào rau củ thập cẩm',
+      calories: 360,
+      price: 78000,
+      imageUrl:
+          'https://images.pexels.com/photos/36865007/pexels-photo-36865007.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Protein',
+      rating: 4.6,
+      reviewCount: 69,
+      protein: 30,
+      carbs: 20,
+      fat: 14,
+      description:
+          'Tôm xào cùng bông cải, nấm và rau củ thập cẩm, đậm vị mà vẫn '
+          'nhẹ bụng.',
+      ingredients: ['Tôm', 'Bông cải', 'Nấm', 'Ớt chuông', 'Sốt tỏi'],
+      reviews: _reviewsB,
+    ),
+    FoodItem(
+      id: 'f19',
+      name: 'Bơ trứng kiểu bữa sáng',
+      calories: 310,
+      price: 52000,
+      imageUrl:
+          'https://images.pexels.com/photos/4491279/pexels-photo-4491279.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Salad',
+      rating: 4.6,
+      reviewCount: 47,
+      protein: 16,
+      carbs: 14,
+      fat: 22,
+      description:
+          'Bơ, trứng và cà chua bi trộn cùng rau xanh - bữa sáng nhanh mà '
+          'vẫn đủ chất.',
+      ingredients: ['Bơ', 'Trứng', 'Cà chua bi', 'Rau xanh', 'Dầu olive'],
+      reviews: _reviewsA,
+    ),
+    FoodItem(
+      id: 'f20',
+      name: 'Sườn cừu nướng rau củ',
+      calories: 460,
+      price: 110000,
+      imageUrl:
+          'https://images.pexels.com/photos/5410460/pexels-photo-5410460.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Protein',
+      rating: 4.8,
+      reviewCount: 53,
+      protein: 34,
+      carbs: 12,
+      fat: 30,
+      description:
+          'Sườn cừu nướng thảo mộc ăn kèm cà chua bi và sốt đặc biệt, đậm '
+          'đà hương vị.',
+      ingredients: ['Sườn cừu', 'Thảo mộc', 'Cà chua bi', 'Tỏi', 'Sốt nướng'],
+      reviews: _reviewsB,
+    ),
+    FoodItem(
+      id: 'f21',
+      name: 'Cơm chiên rau củ',
+      calories: 340,
+      price: 42000,
+      imageUrl:
+          'https://images.pexels.com/photos/3926124/pexels-photo-3926124.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Vegan',
+      rating: 4.3,
+      reviewCount: 61,
+      protein: 8,
+      carbs: 58,
+      fat: 9,
+      description:
+          'Cơm chiên cùng rau củ tươi và cà chua, đơn giản mà vẫn ngon '
+          'miệng.',
+      ingredients: ['Cơm', 'Cà rốt', 'Đậu hà lan', 'Cà chua', 'Hành lá'],
+      reviews: _reviewsA,
+    ),
+    FoodItem(
+      id: 'f22',
+      name: 'Yến mạch ngâm hạt chia',
+      calories: 260,
+      price: 38000,
+      imageUrl:
+          'https://images.pexels.com/photos/2147647/pexels-photo-2147647.jpeg?auto=compress&cs=tinysrgb&w=600',
+      category: 'Vegan',
+      rating: 4.7,
+      reviewCount: 72,
+      protein: 9,
+      carbs: 40,
+      fat: 7,
+      description:
+          'Yến mạch ngâm sữa hạt và hạt chia qua đêm, mát lạnh và tiện lợi '
+          'cho buổi sáng.',
+      ingredients: ['Yến mạch', 'Hạt chia', 'Sữa hạt', 'Mật ong'],
       reviews: _reviewsB,
     ),
   ];
