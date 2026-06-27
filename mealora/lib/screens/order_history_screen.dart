@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../data/sample_data.dart';
 import '../database/database_service.dart';
 import '../models/order.dart';
 import '../state/session_controller.dart';
@@ -7,6 +6,25 @@ import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
 import '../utils/formatters.dart';
 import 'order_tracking_screen.dart';
+
+/// Mục hiển thị một đơn hàng trong lịch sử (chuyển đổi từ [Order] lưu DB).
+class OrderHistoryItem {
+  final String id;
+  final String date;
+  final String items;
+  final int total;
+  final OrderStatus status;
+
+  const OrderHistoryItem({
+    required this.id,
+    required this.date,
+    required this.items,
+    required this.total,
+    required this.status,
+  });
+}
+
+enum OrderStatus { delivering, completed, cancelled }
 
 class OrderHistoryScreen extends StatefulWidget {
   const OrderHistoryScreen({super.key});
@@ -33,17 +51,10 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     final userId = SessionController.instance.userId;
     final dbOrders = await DatabaseService.instance.getOrderHistory(userId);
 
-    if (dbOrders.isEmpty) {
-      // Dùng dữ liệu mẫu khi chưa có đơn thật trong DB.
-      setState(() {
-        _orders = List.of(SampleData.orders);
-        _loading = false;
-      });
-      return;
-    }
-
-    // Chuyển đổi Order (DB) → OrderHistoryItem (UI).
+    // Chuyển đổi Order (DB) → OrderHistoryItem (UI). Người dùng mới chưa
+    // từng đặt hàng sẽ thấy danh sách rỗng thật, không còn dữ liệu mẫu giả.
     final items = await Future.wait(dbOrders.map(_toHistoryItem));
+    if (!mounted) return;
     setState(() {
       _orders = items;
       _loading = false;
@@ -53,8 +64,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Future<OrderHistoryItem> _toHistoryItem(Order order) async {
     final orderItems = await DatabaseService.instance.getOrderItems(order.id);
     final dt = DateTime.fromMillisecondsSinceEpoch(order.createdAt);
-    final dateStr =
-        '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+    final dateStr = Formatters.shortDate(dt);
     final itemNames =
         orderItems.isEmpty ? '—' : orderItems.map((i) => i.mealName).join(', ');
 

@@ -53,4 +53,20 @@ class AuthService {
       await GoogleSignIn.instance.signOut();
     }
   }
+
+  /// Tạo tài khoản Firebase Auth dưới provider Email/Password.
+  /// Ném [FirebaseAuthException] (VD: email-already-in-use, weak-password).
+  Future<void> registerWithEmail(String email, String password) {
+    return FirebaseAuth.instance
+        .createUserWithEmailAndPassword(email: email, password: password)
+        .then((_) {});
+  }
+
+  /// Đăng nhập Firebase Auth bằng provider Email/Password.
+  /// Ném [FirebaseAuthException] (VD: user-not-found, wrong-password).
+  Future<void> signInWithEmail(String email, String password) {
+    return FirebaseAuth.instance
+        .signInWithEmailAndPassword(email: email, password: password)
+        .then((_) {});
+  }
 }

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../database/database_service.dart';
 import '../state/favorites_controller.dart';
 import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
 import '../theme/theme_controller.dart';
+import '../utils/formatters.dart';
 import 'addresses_screen.dart';
 import 'favorites_screen.dart';
 import 'help_support_screen.dart';
@@ -16,8 +18,32 @@ import 'terms_screen.dart';
 
 /// Màn hình hồ sơ: header xanh với avatar, thẻ thống kê, danh sách menu
 /// (gồm công tắc Chế độ tối) và nút đăng xuất.
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  int _orderCount = 0;
+  bool _loadingStats = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    final userId = SessionController.instance.userId;
+    final orders = await DatabaseService.instance.getOrderHistory(userId);
+    if (!mounted) return;
+    setState(() {
+      _orderCount = orders.length;
+      _loadingStats = false;
+    });
+  }
 
   Future<void> _logout(BuildContext context) async {
     await SessionController.instance.logout();
@@ -92,17 +118,22 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  /// Thẻ 3 chỉ số: đơn hàng, điểm thưởng, đánh giá.
+  /// Thẻ 3 chỉ số: đơn hàng, yêu thích, ngày tham gia - đều lấy từ dữ liệu
+  /// thật của người dùng (không còn số liệu giả cho tài khoản mới).
   Widget _buildStats(BuildContext context) {
     final palette = context.palette;
+    final joinDate = SessionController.instance.currentUser?.createdAt;
+    final joinDateText = joinDate != null
+        ? Formatters.shortDate(DateTime.fromMillisecondsSinceEpoch(joinDate))
+        : '—';
     // Số yêu thích cập nhật trực tiếp theo FavoritesController.
     return ListenableBuilder(
       listenable: FavoritesController.instance,
       builder: (context, _) {
         final stats = [
-          ('24', 'Đơn hàng'),
+          (_loadingStats ? '—' : '$_orderCount', 'Đơn hàng'),
           ('${FavoritesController.instance.count}', 'Yêu thích'),
-          ('4.9', 'Đánh giá'),
+          (joinDateText, 'Tham gia'),
         ];
         return Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),

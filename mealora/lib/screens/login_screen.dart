@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart' hide User;
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../database/database_service.dart';
+import '../models/user.dart';
 import '../services/auth_service.dart';
 import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
@@ -39,7 +41,33 @@ class _LoginScreenState extends State<LoginScreen> {
     }
 
     setState(() => _loading = true);
-    final user = await DatabaseService.instance.login(email, password);
+
+    User? user;
+    try {
+      // Xác thực qua Firebase Auth (provider Email/Password) trước.
+      await AuthService.instance.signInWithEmail(email, password);
+      user = await DatabaseService.instance.login(email, password);
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        // Tài khoản tạo trước khi tích hợp Firebase - vẫn còn trong SQLite
+        // cục bộ nhưng chưa có trên Firebase. Đăng nhập cục bộ rồi tự tạo
+        // tài khoản Firebase ngay (di trú) để lần sau dùng chung 1 nguồn.
+        user = await DatabaseService.instance.login(email, password);
+        if (user != null) {
+          try {
+            await AuthService.instance.registerWithEmail(email, password);
+          } catch (_) {
+            // Không chặn đăng nhập nếu việc tạo tài khoản Firebase thất bại.
+          }
+        }
+      } else {
+        if (!mounted) return;
+        setState(() => _loading = false);
+        _snack(_mapFirebaseError(e));
+        return;
+      }
+    }
+
     if (!mounted) return;
     setState(() => _loading = false);
 
@@ -53,6 +81,20 @@ class _LoginScreenState extends State<LoginScreen> {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => const MainShell()),
     );
+  }
+
+  String _mapFirebaseError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Email hoặc mật khẩu không đúng';
+      case 'invalid-email':
+        return 'Email không hợp lệ';
+      case 'user-disabled':
+        return 'Tài khoản đã bị khóa';
+      default:
+        return 'Đăng nhập thất bại: ${e.message ?? e.code}';
+    }
   }
 
   Future<void> _loginWithGoogle() async {

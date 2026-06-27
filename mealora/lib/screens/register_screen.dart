@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../database/database_service.dart';
+import '../services/auth_service.dart';
 import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
@@ -55,6 +57,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     setState(() => _loading = true);
+
+    // Tạo tài khoản Firebase Auth dưới provider Email/Password trước -
+    // đây là nguồn xác thực chính, xuất hiện trong Firebase Console.
+    try {
+      await AuthService.instance.registerWithEmail(email, password);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      _snack(_mapFirebaseError(e));
+      return;
+    }
+
+    // Lưu bản ghi cục bộ (SQLite) để giỏ hàng/yêu thích/đơn hàng hoạt động
+    // ngay cả khi offline.
     final user = await DatabaseService.instance.registerUser(
       email: email,
       password: password,
@@ -74,6 +90,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
       MaterialPageRoute(builder: (_) => const MainShell()),
       (route) => false,
     );
+  }
+
+  String _mapFirebaseError(FirebaseAuthException e) {
+    switch (e.code) {
+      case 'email-already-in-use':
+        return 'Email này đã được đăng ký, vui lòng dùng email khác';
+      case 'weak-password':
+        return 'Mật khẩu quá yếu, vui lòng chọn mật khẩu khác';
+      case 'invalid-email':
+        return 'Email không hợp lệ';
+      default:
+        return 'Đăng ký thất bại: ${e.message ?? e.code}';
+    }
   }
 
   void _snack(String msg) {

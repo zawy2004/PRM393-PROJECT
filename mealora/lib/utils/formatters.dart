@@ -13,4 +13,16 @@ class Formatters {
     }
     return '${buffer.toString()}đ';
   }
+
+  static const List<String> _weekdays = [
+    'Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7',
+  ];
+
+  /// Định dạng "26/06/2026".
+  static String shortDate(DateTime dt) =>
+      '${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year}';
+
+  /// Định dạng "Thứ 6, 26/06/2026".
+  static String weekdayDate(DateTime dt) =>
+      '${_weekdays[dt.weekday % 7]}, ${shortDate(dt)}';
 }

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../data/sample_data.dart';
 import '../models/food_item.dart';
+import '../state/session_controller.dart';
 import '../theme/app_palette.dart';
 import '../theme/app_text_styles.dart';
+import '../utils/formatters.dart';
 import '../widgets/category_chip.dart';
 import '../widgets/food_card.dart';
 import '../widgets/search_field.dart';
@@ -81,9 +83,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  /// Header: lời chào + ngày tháng bên trái, chuông thông báo bên phải.
+  /// Header: lời chào (tên người dùng thật) + ngày hiện tại bên trái,
+  /// chuông thông báo bên phải.
   Widget _buildHeader() {
     final palette = context.palette;
+    final fullName = SessionController.instance.currentUser?.fullName;
+    final firstName =
+        (fullName == null || fullName.isEmpty) ? 'bạn' : fullName.split(' ').last;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -91,11 +97,11 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Chào, Luong!',
+              Text('Chào, $firstName!',
                   style: AppTextStyles.greeting
                       .copyWith(color: palette.textPrimary)),
               const SizedBox(height: 6),
-              Text('Thứ 6, 12/06/2026',
+              Text(Formatters.weekdayDate(DateTime.now()),
                   style: AppTextStyles.bodySmall
                       .copyWith(color: palette.textSecondary)),
             ],

@@ -297,44 +297,6 @@ class SampleData {
     ),
   ];
 
-  // ---- Lịch sử đơn hàng ----
-  static const List<OrderHistoryItem> orders = [
-    OrderHistoryItem(
-      id: '#MP001',
-      date: '12/06/2026',
-      items: 'Salad gà nướng, Cơm gạo lứt',
-      total: 175000,
-      status: OrderStatus.delivering,
-    ),
-    OrderHistoryItem(
-      id: '#MP002',
-      date: '10/06/2026',
-      items: 'Poke bowl cá hồi',
-      total: 85000,
-      status: OrderStatus.completed,
-    ),
-    OrderHistoryItem(
-      id: '#MP003',
-      date: '08/06/2026',
-      items: 'Sandwich trứng, Wrap gà',
-      total: 105000,
-      status: OrderStatus.completed,
-    ),
-    OrderHistoryItem(
-      id: '#MP004',
-      date: '05/06/2026',
-      items: 'Bowl đậu hũ',
-      total: 50000,
-      status: OrderStatus.cancelled,
-    ),
-    OrderHistoryItem(
-      id: '#MP005',
-      date: '03/06/2026',
-      items: 'Salad cá ngừ, Smoothie bowl xoài',
-      total: 125000,
-      status: OrderStatus.completed,
-    ),
-  ];
 }
 
 /// Một dòng trong giỏ hàng (món ăn + số lượng).
@@ -363,22 +325,3 @@ class AppNotification {
     this.unread = false,
   });
 }
-
-/// Lịch sử đơn hàng.
-class OrderHistoryItem {
-  final String id;
-  final String date;
-  final String items;
-  final int total;
-  final OrderStatus status;
-
-  const OrderHistoryItem({
-    required this.id,
-    required this.date,
-    required this.items,
-    required this.total,
-    required this.status,
-  });
-}
-
-enum OrderStatus { delivering, completed, cancelled }
