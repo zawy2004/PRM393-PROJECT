@@ -3,6 +3,7 @@ import '../models/food_item.dart';
 import '../models/order.dart';
 import '../models/payment_method.dart';
 import '../models/review.dart';
+import '../models/transaction.dart';
 import '../models/user.dart';
 import 'dao/address_dao.dart';
 import 'dao/cart_dao.dart';
@@ -12,6 +13,7 @@ import 'dao/notification_dao.dart';
 import 'dao/order_dao.dart';
 import 'dao/payment_method_dao.dart';
 import 'dao/review_dao.dart';
+import 'dao/transaction_dao.dart';
 import 'dao/user_dao.dart';
 
 /// Facade duy nhất cho toàn bộ lớp DB - import file này thay vì từng DAO.
@@ -130,6 +132,14 @@ class DatabaseService {
 
   Future<void> updateOrderStatus(String orderId, String status) =>
       OrderDao.instance.updateStatus(orderId, status);
+
+  // ── Giao dịch thanh toán ──────────────────────────────────────────────────
+
+  Future<void> recordTransaction(PaymentTransaction tx) =>
+      TransactionDao.instance.insert(tx);
+
+  Future<List<PaymentTransaction>> getTransactionHistory(String userId) =>
+      TransactionDao.instance.findByUser(userId);
 
   // ── Addresses ─────────────────────────────────────────────────────────────
 

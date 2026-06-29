@@ -5,6 +5,7 @@ import '../database/database_service.dart';
 import '../models/address.dart';
 import '../models/order.dart';
 import '../models/payment_method.dart';
+import '../models/transaction.dart';
 import '../services/momo_service.dart';
 import '../state/cart_controller.dart';
 import '../state/session_controller.dart';
@@ -13,7 +14,7 @@ import '../theme/app_text_styles.dart';
 import '../utils/formatters.dart';
 import '../widgets/app_header.dart';
 import '../widgets/primary_button.dart';
-import 'order_tracking_screen.dart';
+import 'payment_result_screen.dart';
 
 /// Màn hình thanh toán: địa chỉ giao, thời gian giao, phương thức thanh toán,
 /// mã giảm giá và bảng tổng kết + nút đặt hàng.
@@ -71,7 +72,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     if (_isMomo(method)) {
       await _payWithMomo();
     } else {
-      await _finalizeOrder(method.label);
+      await _finalizeOrder(method.label, paid: false);
     }
   }
 
@@ -135,24 +136,73 @@ class _CheckoutScreenState extends State<CheckoutScreen>
           .checkStatus(orderId: orderId, requestId: requestId);
 
       if (res.resultCode == 0) {
-        await _finalizeOrder('Ví MoMo');
+        await _finalizeOrder('Ví MoMo', paid: true);
       } else {
+        await DatabaseService.instance.recordTransaction(PaymentTransaction(
+          userId: SessionController.instance.userId,
+          method: 'Ví MoMo',
+          amount: widget.total,
+          status: 'failed',
+          message: res.message,
+          createdAt: DateTime.now().millisecondsSinceEpoch,
+        ));
         if (!mounted) return;
         setState(() => _loading = false);
-        _snack('Thanh toán MoMo không thành công (${res.resultCode}): '
-            '${res.message}');
+        _goToResult(
+          success: false,
+          paymentLabel: 'Ví MoMo',
+          paid: false,
+          errorMessage:
+              'Thanh toán MoMo không thành công (${res.resultCode}): ${res.message}',
+        );
       }
     } catch (e) {
+      await DatabaseService.instance.recordTransaction(PaymentTransaction(
+        userId: SessionController.instance.userId,
+        method: 'Ví MoMo',
+        amount: widget.total,
+        status: 'failed',
+        message: '$e',
+        createdAt: DateTime.now().millisecondsSinceEpoch,
+      ));
       if (!mounted) return;
       setState(() => _loading = false);
-      _snack('Lỗi kiểm tra trạng thái MoMo: $e');
+      _goToResult(
+        success: false,
+        paymentLabel: 'Ví MoMo',
+        paid: false,
+        errorMessage: 'Lỗi kiểm tra trạng thái MoMo: $e',
+      );
     }
   }
 
-  /// Lưu đơn hàng vào DB, đẩy thông báo, xóa giỏ hàng rồi chuyển sang theo dõi.
-  /// Dùng chung cho cả thanh toán tiền mặt/thẻ (gọi trực tiếp) và MoMo
-  /// (gọi sau khi [_checkMomoStatus] xác nhận thành công).
-  Future<void> _finalizeOrder(String paymentLabel) async {
+  void _goToResult({
+    required bool success,
+    required String paymentLabel,
+    required bool paid,
+    String orderId = '',
+    int? amount,
+    String? errorMessage,
+  }) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PaymentResultScreen(
+          success: success,
+          orderId: orderId,
+          amount: amount ?? widget.total,
+          paymentLabel: paymentLabel,
+          paid: paid,
+          errorMessage: errorMessage,
+        ),
+      ),
+    );
+  }
+
+  /// Lưu đơn hàng vào DB, đẩy thông báo, xóa giỏ hàng rồi chuyển sang trang
+  /// kết quả thanh toán. Dùng chung cho cả thanh toán tiền mặt/thẻ (gọi trực
+  /// tiếp, [paid] = false vì chưa có cổng xử lý thật) và MoMo (gọi sau khi
+  /// [_checkMomoStatus] xác nhận thành công, [paid] = true).
+  Future<void> _finalizeOrder(String paymentLabel, {required bool paid}) async {
     if (!mounted) return;
     setState(() {
       _loading = true;
@@ -175,6 +225,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       addressDetail: _address.detail,
       paymentLabel: paymentLabel,
       status: 'delivering',
+      paymentStatus: paid ? 'paid' : 'unpaid',
       createdAt: now.millisecondsSinceEpoch,
     );
 
@@ -189,6 +240,14 @@ class _CheckoutScreenState extends State<CheckoutScreen>
         .toList();
 
     await DatabaseService.instance.placeOrder(order, items);
+    await DatabaseService.instance.recordTransaction(PaymentTransaction(
+      userId: userId,
+      orderId: order.id,
+      method: paymentLabel,
+      amount: widget.total,
+      status: 'success',
+      createdAt: now.millisecondsSinceEpoch,
+    ));
     await DatabaseService.instance.pushNotification(
       userId: userId,
       title: 'Đơn hàng đang được giao',
@@ -200,8 +259,12 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
     if (!mounted) return;
     setState(() => _loading = false);
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const OrderTrackingScreen()),
+    _goToResult(
+      success: true,
+      orderId: order.id,
+      amount: widget.total,
+      paymentLabel: paymentLabel,
+      paid: paid,
     );
   }
 

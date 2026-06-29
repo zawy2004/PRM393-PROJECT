@@ -15,6 +15,7 @@ import 'payment_methods_screen.dart';
 import 'personal_info_screen.dart';
 import 'subscription_screen.dart';
 import 'terms_screen.dart';
+import 'transaction_history_screen.dart';
 
 /// Màn hình hồ sơ: header xanh với avatar, thẻ thống kê, danh sách menu
 /// (gồm công tắc Chế độ tối) và nút đăng xuất.
@@ -192,6 +193,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const PaymentMethodsScreen()),
+        );
+      }),
+      _menuRow(context, Icons.receipt_long_outlined, 'Lịch sử giao dịch',
+          onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const TransactionHistoryScreen()),
         );
       }),
       _menuRow(context, Icons.card_membership_outlined, 'Gói đăng ký của tôi',

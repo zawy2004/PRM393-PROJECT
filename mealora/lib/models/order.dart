@@ -11,6 +11,9 @@ class Order {
   final String paymentLabel;
   /// 'delivering' | 'completed' | 'cancelled'
   final String status;
+  /// 'paid' | 'unpaid' - MoMo xác nhận thành công thì 'paid', tiền mặt/thẻ
+  /// (chưa có cổng thanh toán thật) thì 'unpaid' (thu khi giao hàng).
+  final String paymentStatus;
   final int createdAt;
 
   const Order({
@@ -24,6 +27,7 @@ class Order {
     required this.addressDetail,
     required this.paymentLabel,
     required this.status,
+    this.paymentStatus = 'unpaid',
     required this.createdAt,
   });
 
@@ -38,6 +42,7 @@ class Order {
         'address_detail': addressDetail,
         'payment_label': paymentLabel,
         'status': status,
+        'payment_status': paymentStatus,
         'created_at': createdAt,
       };
 
@@ -52,6 +57,7 @@ class Order {
         addressDetail: map['address_detail'] as String,
         paymentLabel: map['payment_label'] as String,
         status: map['status'] as String,
+        paymentStatus: map['payment_status'] as String? ?? 'unpaid',
         createdAt: map['created_at'] as int,
       );
 }

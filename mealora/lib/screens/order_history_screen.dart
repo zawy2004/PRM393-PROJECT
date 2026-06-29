@@ -14,6 +14,8 @@ class OrderHistoryItem {
   final String items;
   final int total;
   final OrderStatus status;
+  final String paymentLabel;
+  final bool paid;
 
   const OrderHistoryItem({
     required this.id,
@@ -21,6 +23,8 @@ class OrderHistoryItem {
     required this.items,
     required this.total,
     required this.status,
+    required this.paymentLabel,
+    required this.paid,
   });
 }
 
@@ -86,6 +90,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
       items: itemNames,
       total: order.total,
       status: status,
+      paymentLabel: order.paymentLabel,
+      paid: order.paymentStatus == 'paid',
     );
   }
 
@@ -225,6 +231,23 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               style: AppTextStyles.bodySmall.copyWith(color: palette.textSecondary),
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.payments_outlined, size: 14, color: palette.textHint),
+              const SizedBox(width: 4),
+              Text(order.paymentLabel,
+                  style: AppTextStyles.caption.copyWith(color: palette.textSecondary)),
+              const SizedBox(width: 8),
+              Text(order.paid ? 'Đã thanh toán' : 'Chưa thanh toán',
+                  style: AppTextStyles.caption.copyWith(
+                    color: order.paid
+                        ? const Color(0xFF22C55E)
+                        : const Color(0xFFF59E0B),
+                    fontWeight: FontWeight.w600,
+                  )),
+            ],
+          ),
           const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,

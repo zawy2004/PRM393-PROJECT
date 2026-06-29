@@ -7,7 +7,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const _dbName = 'mealora.db';
-  static const _dbVersion = 1;
+  static const _dbVersion = 2;
 
   Database? _db;
 
@@ -22,6 +22,7 @@ class DatabaseHelper {
       path,
       version: _dbVersion,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
     );
   }
@@ -137,7 +138,21 @@ class DatabaseHelper {
         address_detail TEXT NOT NULL,
         payment_label  TEXT NOT NULL,
         status         TEXT NOT NULL DEFAULT 'delivering',
+        payment_status TEXT NOT NULL DEFAULT 'unpaid',
         created_at     INTEGER NOT NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE transactions (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id    TEXT NOT NULL,
+        order_id   TEXT,
+        method     TEXT NOT NULL,
+        amount     INTEGER NOT NULL,
+        status     TEXT NOT NULL,
+        message    TEXT,
+        created_at INTEGER NOT NULL
       )
     ''');
 
@@ -164,6 +179,26 @@ class DatabaseHelper {
         created_at  INTEGER NOT NULL
       )
     ''');
+  }
+
+  /// Nâng cấp DB cho người dùng đã cài bản cũ (v1: chưa có payment_status/transactions).
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute(
+          "ALTER TABLE orders ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'unpaid'");
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS transactions (
+          id         INTEGER PRIMARY KEY AUTOINCREMENT,
+          user_id    TEXT NOT NULL,
+          order_id   TEXT,
+          method     TEXT NOT NULL,
+          amount     INTEGER NOT NULL,
+          status     TEXT NOT NULL,
+          message    TEXT,
+          created_at INTEGER NOT NULL
+        )
+      ''');
+    }
   }
 
   /// Xóa toàn bộ DB (dùng khi debug).
